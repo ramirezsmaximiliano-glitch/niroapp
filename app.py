@@ -288,14 +288,14 @@ def update_weekly_report(ws, spreadsheet_id, client, creds):
     
     # Limpiar resumen anterior si existe
     # Escribir resumen
-    ws.update(f"A{start_row}", [["─── RESUMEN SEMANAL ───"]])
-    ws.update(f"A{start_row+1}", [["TOTAL GENERAL", "", f"${total:,.2f} MXN"]])
-    ws.update(f"A{start_row+2}", [["Rider", "Total (MXN)", ""]])
+    ws.update([["─── RESUMEN SEMANAL ───"]], f"A{start_row}")
+    ws.update([["TOTAL GENERAL", "", f"${total:,.2f} MXN"]], f"A{start_row+1}")
+    ws.update([["Rider", "Total (MXN)", ""]], f"A{start_row+2}")
     
     rider_rows = []
     for _, row in por_rider.iterrows():
         rider_rows.append([row["Rider"], f"${row['Monto (MXN)']:,.2f}", ""])
-    ws.update(f"A{start_row+3}", rider_rows)
+    ws.update(rider_rows, f"A{start_row+3}")
 
 # ─────────────────────────────────────────────
 # HELPERS: CONFIG (en Sheets — hoja "Config")
@@ -305,18 +305,18 @@ def get_config_sheet(spreadsheet):
     if "Config" not in titles:
         ws = spreadsheet.add_worksheet(title="Config", rows=100, cols=5)
         # Defaults
-        ws.update("A1", [["RIDERS"]])
+        ws.update([["RIDERS"]], "A1")
         default_riders = [
             ["Christian Alejandro"], ["Alan Daniel"], ["Carlos Omar"],
             ["Jair Asael"], ["David Martinez"], ["Felix de Jesus"], ["Ricardo Guadalupe"]
         ]
-        ws.update("A2", default_riders)
+        ws.update(default_riders, "A2")
         
-        ws.update("D1", [["AGENCIAS Y ENCARGADOS"]])
-        ws.update("D2", [
+        ws.update([["AGENCIAS Y ENCARGADOS"]], "D1")
+        ws.update([
             ["CF Leones", "Por definir"],
             ["Sierra Lincoln", "Por definir"],
-        ])
+        ], "D2")
         return ws
     return spreadsheet.worksheet("Config")
 
@@ -344,12 +344,12 @@ def save_config(spreadsheet, riders, agencias):
     ws = get_config_sheet(spreadsheet)
     ws.clear()
     
-    ws.update("A1", [["RIDERS"]])
+    ws.update([["RIDERS"]], "A1")
     rider_rows = [[r] for r in riders]
     if rider_rows:
-        ws.update("A2", rider_rows)
+        ws.update(rider_rows, "A2")
     
-    ws.update("D1", [["AGENCIAS Y ENCARGADOS"]])
+    ws.update([["AGENCIAS Y ENCARGADOS"]], "D1")
     ag_rows = []
     for agencia, encargados in agencias.items():
         if encargados:
@@ -358,7 +358,7 @@ def save_config(spreadsheet, riders, agencias):
         else:
             ag_rows.append([agencia, ""])
     if ag_rows:
-        ws.update("D2", ag_rows)
+        ws.update(ag_rows, "D2")
 
 
 # ─────────────────────────────────────────────
