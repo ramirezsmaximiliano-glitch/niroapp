@@ -202,14 +202,20 @@ div[data-testid="stFileUploader"] label {
 # ─────────────────────────────────────────────
 # HELPERS: GOOGLE
 # ─────────────────────────────────────────────
+@st.cache_resource
 def get_google_client():
     creds_dict = st.secrets["gcp_service_account"]
     creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
     client = gspread.authorize(creds)
     return client, creds
 
-def get_drive_service(creds):
+@st.cache_resource
+def get_drive_service_cached():
+    _, creds = get_google_client()
     return build("drive", "v3", credentials=creds)
+
+def get_drive_service(creds):
+    return get_drive_service_cached()
 
 def get_or_create_sheet(client, spreadsheet_id):
     return client.open_by_key(spreadsheet_id)
