@@ -533,9 +533,9 @@ if st.session_state.vista == "agencia":
                     st.rerun()
 
                 except Exception as e:
-    import traceback
-    st.error(f"Error: {str(e)}")
-    st.code(traceback.format_exc())
+                    import traceback
+                    st.error(f"Error: {str(e)}")
+                    st.code(traceback.format_exc())
 
 
 # ─────────────────────────────────────────────
