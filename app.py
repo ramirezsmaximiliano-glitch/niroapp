@@ -533,7 +533,9 @@ if st.session_state.vista == "agencia":
                     st.rerun()
 
                 except Exception as e:
-                    st.markdown(f'<div class="error-box">❌ Error al guardar: {e}</div>', unsafe_allow_html=True)
+    import traceback
+    st.error(f"Error: {str(e)}")
+    st.code(traceback.format_exc())
 
 
 # ─────────────────────────────────────────────
