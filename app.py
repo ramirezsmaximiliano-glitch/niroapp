@@ -252,23 +252,18 @@ def append_registro(ws, folio, fecha_hora, rider, agencia, monto, recibido_por, 
     row = [folio, fecha_hora, rider, agencia, monto, recibido_por, notas, comprobante_url]
     ws.append_row(row)
 
-def upload_comprobante_drive(drive_service, file_bytes, filename, folder_id, mime_type):
-    media = MediaIoBaseUpload(io.BytesIO(file_bytes), mimetype=mime_type)
-    file_metadata = {
-        "name": filename,
-        "parents": [folder_id]
-    }
-    uploaded = drive_service.files().create(
-        body=file_metadata,
-        media_body=media,
-        fields="id, webViewLink"
-    ).execute()
-    # Hacer público para ver en Sheets
-    drive_service.permissions().create(
-        fileId=uploaded["id"],
-        body={"type": "anyone", "role": "reader"}
-    ).execute()
-    return uploaded.get("webViewLink", "")
+def upload_comprobante_imgbb(file_bytes, filename):
+    import base64
+    api_key = st.secrets["imgbb_api_key"]
+    b64 = base64.b64encode(file_bytes).decode("utf-8")
+    response = requests.post(
+        "https://api.imgbb.com/1/upload",
+        data={"key": api_key, "image": b64, "name": filename}
+    )
+    data = response.json()
+    if data.get("success"):
+        return data["data"]["url_viewer"]
+    return ""
 
 def update_weekly_report(ws, spreadsheet_id, client, creds):
     """Genera resumen semanal al final de la hoja"""
@@ -513,12 +508,10 @@ if st.session_state.vista == "agencia":
                     folio = get_next_folio(ws)
                     fecha_hora = datetime.now().strftime("%d/%m/%Y %H:%M")
                     
-                    # Subir comprobante a Drive
-                    drive_service = get_drive_service(creds)
+                    # Subir comprobante a ImgBB
                     file_bytes = comprobante.read()
-                    mime = "application/pdf" if comprobante.name.endswith(".pdf") else "image/jpeg"
-                    filename = f"{folio}_{rider.replace(' ', '_')}.{'pdf' if mime == 'application/pdf' else 'jpg'}"
-                    comp_url = upload_comprobante_drive(drive_service, file_bytes, filename, folder_id, mime)
+                    filename = f"{folio}_{rider.replace(' ', '_')}"
+                    comp_url = upload_comprobante_imgbb(file_bytes, filename)
                     
                     # Registrar en Sheets
                     append_registro(ws, folio, fecha_hora, rider, agencia, monto, recibido_por, notas, comp_url)
