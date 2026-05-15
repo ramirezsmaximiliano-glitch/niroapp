@@ -294,7 +294,7 @@ def format_data_row(ws, spreadsheet, row_num):
     })
     # Formato dinero en columna E
     ws.format(f"E{row_num}", {
-        "numberFormat": {"type": "CURRENCY", "pattern": ""$"#,##0.00"},
+        "numberFormat": {"type": "CURRENCY", "pattern": '$#,##0.00'},
         "horizontalAlignment": "RIGHT",
     })
     # Centrar columnas A, B, D, F
