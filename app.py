@@ -229,18 +229,77 @@ def ensure_week_sheet(spreadsheet):
     
     if sheet_name not in sheet_titles:
         ws = spreadsheet.add_worksheet(title=sheet_name, rows=500, cols=10)
-        # Headers
         headers = ["Folio", "Fecha y Hora", "Rider", "Agencia", "Monto (MXN)", "Recibido por", "Notas", "Comprobante URL"]
         ws.append_row(headers)
-        # Formato encabezado (negrita) - via batch update
+        
+        # Formato encabezado
         ws.format("A1:H1", {
-            "textFormat": {"bold": True, "fontSize": 11},
+            "textFormat": {"bold": True, "fontSize": 11, "foregroundColor": {"red": 1, "green": 1, "blue": 1}},
             "backgroundColor": {"red": 0.067, "green": 0.067, "blue": 0.067},
+            "horizontalAlignment": "CENTER",
+            "verticalAlignment": "MIDDLE",
         })
+        
+        # Ancho de columnas
+        spreadsheet.batch_update({"requests": [
+            {"updateDimensionProperties": {
+                "range": {"sheetId": ws.id, "dimension": "COLUMNS", "startIndex": 0, "endIndex": 1},
+                "properties": {"pixelSize": 160}, "fields": "pixelSize"}},
+            {"updateDimensionProperties": {
+                "range": {"sheetId": ws.id, "dimension": "COLUMNS", "startIndex": 1, "endIndex": 2},
+                "properties": {"pixelSize": 145}, "fields": "pixelSize"}},
+            {"updateDimensionProperties": {
+                "range": {"sheetId": ws.id, "dimension": "COLUMNS", "startIndex": 2, "endIndex": 3},
+                "properties": {"pixelSize": 160}, "fields": "pixelSize"}},
+            {"updateDimensionProperties": {
+                "range": {"sheetId": ws.id, "dimension": "COLUMNS", "startIndex": 3, "endIndex": 4},
+                "properties": {"pixelSize": 130}, "fields": "pixelSize"}},
+            {"updateDimensionProperties": {
+                "range": {"sheetId": ws.id, "dimension": "COLUMNS", "startIndex": 4, "endIndex": 5},
+                "properties": {"pixelSize": 120}, "fields": "pixelSize"}},
+            {"updateDimensionProperties": {
+                "range": {"sheetId": ws.id, "dimension": "COLUMNS", "startIndex": 5, "endIndex": 6},
+                "properties": {"pixelSize": 130}, "fields": "pixelSize"}},
+            {"updateDimensionProperties": {
+                "range": {"sheetId": ws.id, "dimension": "COLUMNS", "startIndex": 6, "endIndex": 7},
+                "properties": {"pixelSize": 200}, "fields": "pixelSize"}},
+            {"updateDimensionProperties": {
+                "range": {"sheetId": ws.id, "dimension": "COLUMNS", "startIndex": 7, "endIndex": 8},
+                "properties": {"pixelSize": 200}, "fields": "pixelSize"}},
+            # Altura del header
+            {"updateDimensionProperties": {
+                "range": {"sheetId": ws.id, "dimension": "ROWS", "startIndex": 0, "endIndex": 1},
+                "properties": {"pixelSize": 35}, "fields": "pixelSize"}},
+            # Freeze header row
+            {"updateSheetProperties": {
+                "properties": {"sheetId": ws.id, "gridProperties": {"frozenRowCount": 1}},
+                "fields": "gridProperties.frozenRowCount"}},
+        ]})
+        
         return ws, True
     else:
         ws = spreadsheet.worksheet(sheet_name)
         return ws, False
+
+
+def format_data_row(ws, spreadsheet, row_num):
+    """Aplica formato a una fila de datos recién agregada"""
+    # Alternar color de fila
+    bg = {"red": 0.95, "green": 0.95, "blue": 0.95} if row_num % 2 == 0 else {"red": 1, "green": 1, "blue": 1}
+    
+    ws.format(f"A{row_num}:H{row_num}", {
+        "backgroundColor": bg,
+        "verticalAlignment": "MIDDLE",
+        "textFormat": {"fontSize": 10},
+    })
+    # Formato dinero en columna E
+    ws.format(f"E{row_num}", {
+        "numberFormat": {"type": "CURRENCY", "pattern": ""$"#,##0.00"},
+        "horizontalAlignment": "RIGHT",
+    })
+    # Centrar columnas A, B, D, F
+    ws.format(f"A{row_num}:D{row_num}", {"horizontalAlignment": "CENTER"})
+    ws.format(f"F{row_num}", {"horizontalAlignment": "CENTER"})
 
 def get_next_folio(ws):
     records = ws.get_all_values()
@@ -248,9 +307,13 @@ def get_next_folio(ws):
     count = len([r for r in records[1:] if r[0]])
     return f"NIRO-{datetime.now().strftime('%y%m%d')}-{str(count + 1).zfill(3)}"
 
-def append_registro(ws, folio, fecha_hora, rider, agencia, monto, recibido_por, notas, comprobante_url):
+def append_registro(ws, spreadsheet, folio, fecha_hora, rider, agencia, monto, recibido_por, notas, comprobante_url):
     row = [folio, fecha_hora, rider, agencia, monto, recibido_por, notas, comprobante_url]
     ws.append_row(row)
+    # Aplicar formato a la nueva fila
+    all_rows = ws.get_all_values()
+    row_num = len(all_rows)
+    format_data_row(ws, spreadsheet, row_num)
 
 def upload_comprobante_imgbb(file_bytes, filename):
     import base64
@@ -514,7 +577,7 @@ if st.session_state.vista == "agencia":
                     comp_url = upload_comprobante_imgbb(file_bytes, filename)
                     
                     # Registrar en Sheets
-                    append_registro(ws, folio, fecha_hora, rider, agencia, monto, recibido_por, notas, comp_url)
+                    append_registro(ws, spreadsheet, folio, fecha_hora, rider, agencia, monto, recibido_por, notas, comp_url)
                     
                     st.session_state.registro_exitoso = folio
                     st.rerun()
