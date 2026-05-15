@@ -254,7 +254,7 @@ def append_registro(ws, folio, fecha_hora, rider, agencia, monto, recibido_por, 
 
 def upload_comprobante_imgbb(file_bytes, filename):
     import base64
-    api_key = st.secrets["imgbb_api_key"]
+    api_key = "fa54f82ca6f8797309e7cf2ea06d21e6"
     b64 = base64.b64encode(file_bytes).decode("utf-8")
     response = requests.post(
         "https://api.imgbb.com/1/upload",
